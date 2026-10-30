@@ -17,7 +17,7 @@ class classifier:
             raise ValueError('Unknown Categories Specified')
 
     def __call__(self, I, k=1):
-        tk = self.model(I).topk(k)
+        tk = nn.functional.softmax(self.model(I), dim=-1).topk(k)
         for i in range(k):
             print(str(i) + ': ' +
                   self.categ[tk[1][0][i]] + 
@@ -51,7 +51,9 @@ def load_model(name='alexnet', **kwargs):
     else:
         raise ValueError('Unkown model name +' )
     
+    # normalize inside the model, s.t. attacks act on images in [0,1];
+    # the model returns logits, as expected by nn.CrossEntropyLoss
     return nn.Sequential(
-        model,
-        nn.Softmax(dim=-1)
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        model
     )
